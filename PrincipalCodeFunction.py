@@ -8,6 +8,8 @@ from datetime import datetime
 import time
 import picamera
 import getopt
+import RPi.GPIO as GPIO
+import time
 
 
 # Certificados de endpoint y aws
@@ -132,6 +134,14 @@ def CargarS3(test):
     if os.path.exists(dirfile):
         os.remove(dirfile)
 
+# BCM para activar setear el estado de los pines
+GPIO.setmode(GPIO.BCM)
+# Poner GPIO 17 como OUTput
+GPIO.setup(17, GPIO.OUT)
+# Estado inicial pin 17 HIGH
+GPIO.output(17, GPIO.HIGH)
+
+
 
 # Resultado de la metadata traida por MQTT
 def Validacion(client, userdata, message):
@@ -141,6 +151,14 @@ def Validacion(client, userdata, message):
         Sml = data[1][0]['Similaridad']
         print("Similaridad: " + str(Sml))
         if(Sml >= 90):
+            # Poner pin 17 en LOW 
+            GPIO.output(17, GPIO.LOW)
+            # Tiempo del pulso
+            time.sleep(0.5)
+            # Volver a HIGH
+            GPIO.output(17, GPIO.HIGH)
+            # Limpiar
+            GPIO.cleanup()
     except:
         pass
     print("Evento Finalizado.")
@@ -162,3 +180,5 @@ while True:
     if(verifRFIDNum(captura)):
         print("RFID Correccto, Validar Foto...")
         CargaS3(captura)
+    else:
+        print("Acceso Denegado")
